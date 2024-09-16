@@ -82,6 +82,7 @@ def main():
     parser.add_argument("--use-selenium", action="store_true", help="Use Selenium for JavaScript rendering")
     parser.add_argument("--use-sitemap", action="store_true", help="Use sitemap for crawling")
     parser.add_argument("--max-pages", type=int, default=50, help="Maximum number of pages to scrape")
+    parser.add_argument("--cookie-file", type=str, help="Path to JSON file containing cookies for authentication")
     args = parser.parse_args()
 
     # Download NLTK data
@@ -90,7 +91,7 @@ def main():
     logging.info(f"Starting enhanced web scraping for {args.url}...")
     
     file_manager = FileManager(args.url)
-    scraper = EnhancedWebScraper(args.url, args.delay, args.use_selenium, args.max_pages)
+    scraper = EnhancedWebScraper(args.url, args.delay, args.use_selenium, args.max_pages, args.cookie_file)
     summarizer = AdvancedSummarizer()
 
     try:

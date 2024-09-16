@@ -19,6 +19,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - Organized output with timestamps and metadata
 - User-friendly command-line interface
 - Support for both regular HTTP requests and Selenium for JavaScript-rendered content
+- Cookie-based authentication for accessing content behind logins
 
 ## Dependencies
 
@@ -83,11 +84,29 @@ Options:
 - `--use-selenium`: Use Selenium for JavaScript rendering
 - `--use-sitemap`: Use sitemap for crawling
 - `--max-pages`: Set the maximum number of pages to scrape (default: 50)
+- `--cookie-file`: Path to JSON file containing cookies for authentication
 
 Example:
 ```
-python main.py --url https://example.com --delay 2 --use-selenium --max-pages 100
+python main.py --url https://example.com --delay 2 --use-selenium --max-pages 100 --cookie-file path/to/cookies.json
 ```
+
+### Using Cookies for Authentication
+
+To scrape websites that require authentication, you can use the `--cookie-file` option. Create a JSON file with your cookies in the following format:
+
+```json
+[
+  {
+    "name": "cookie_name",
+    "value": "cookie_value",
+    "domain": ".example.com"
+  },
+  ...
+]
+```
+
+You can obtain these cookies by logging into the website manually and then using browser developer tools to export the cookies.
 
 ## Output
 
@@ -122,7 +141,7 @@ Contributions, issues, and feature requests are welcome. Feel free to check the 
 
 ## Disclaimer
 
-This tool is for educational and research purposes only. Always respect website terms of service and robots.txt files when scraping. Ensure you have permission to scrape and summarize content from the target website.
+This tool is for educational and research purposes only. Always respect website terms of service and robots.txt files when scraping. Ensure you have permission to scrape and summarize content from the target website. When using cookie-based authentication, make sure you have the right to access and scrape the content behind the login.
 
 ## Getting a Human-Readable Summary
 

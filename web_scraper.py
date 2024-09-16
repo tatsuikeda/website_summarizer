@@ -1,5 +1,6 @@
 import logging
 import time
+import json
 from urllib.parse import urljoin, urlparse
 from typing import Set, Generator, Tuple
 import requests
@@ -15,7 +16,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.core.os_manager import ChromeType
 
 class EnhancedWebScraper:
-    def __init__(self, base_url: str, delay: float = 1, use_selenium: bool = False, max_pages: int = 100):
+    def __init__(self, base_url: str, delay: float = 1, use_selenium: bool = False, max_pages: int = 100, cookie_file: str = None):
         self.base_url = base_url
         self.domain = urlparse(base_url).netloc
         self.delay = delay
@@ -23,8 +24,21 @@ class EnhancedWebScraper:
         self.use_selenium = use_selenium
         self.max_pages = max_pages
         self.driver = None
+        self.cookie_file = cookie_file
+        self.session = requests.Session()
+        if self.cookie_file:
+            self._load_cookies()
         if self.use_selenium:
             self._setup_selenium()
+
+    def _load_cookies(self):
+        try:
+            with open(self.cookie_file, 'r') as f:
+                cookies = json.load(f)
+                for cookie in cookies:
+                    self.session.cookies.set(cookie['name'], cookie['value'], domain=cookie['domain'])
+        except Exception as e:
+            logging.error(f"Failed to load cookies from file: {str(e)}")
 
     def _setup_selenium(self):
         logging.info("Setting up Selenium with Chromium")
@@ -41,10 +55,22 @@ class EnhancedWebScraper:
                 service=Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()),
                 options=chrome_options
             )
+            if self.cookie_file:
+                self._add_cookies_to_selenium()
             logging.info("Chromium WebDriver initialized successfully")
         except Exception as e:
             logging.error(f"Failed to initialize Chromium WebDriver: {str(e)}", exc_info=True)
             raise
+
+    def _add_cookies_to_selenium(self):
+        self.driver.get(self.base_url)  # Navigate to the domain to set cookies
+        try:
+            with open(self.cookie_file, 'r') as f:
+                cookies = json.load(f)
+                for cookie in cookies:
+                    self.driver.add_cookie(cookie)
+        except Exception as e:
+            logging.error(f"Failed to add cookies to Selenium: {str(e)}")
 
     def get_page_content(self, url: str) -> str:
         if self.use_selenium:
@@ -58,7 +84,7 @@ class EnhancedWebScraper:
                 logging.error(f"Error loading page {url}: {str(e)}")
                 return ""
         else:
-            response = requests.get(url, headers={'User-Agent': 'Custom Web Scraper 1.0'})
+            response = self.session.get(url, headers={'User-Agent': 'Custom Web Scraper 1.0'})
             response.raise_for_status()
             return response.text
 
@@ -74,7 +100,7 @@ class EnhancedWebScraper:
 
     def process_sitemap(self, sitemap_url: str) -> Set[str]:
         try:
-            response = requests.get(sitemap_url, headers={'User-Agent': 'Custom Web Scraper 1.0'})
+            response = self.session.get(sitemap_url, headers={'User-Agent': 'Custom Web Scraper 1.0'})
             response.raise_for_status()
             root = ET.fromstring(response.content)
             
@@ -123,3 +149,4 @@ class EnhancedWebScraper:
     def close(self):
         if self.driver:
             self.driver.quit()
+        self.session.close()
